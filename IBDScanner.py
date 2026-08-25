@@ -4,11 +4,24 @@ import os
 
 email = os.getenv("EMAIL")
 barcode = "0858847000284" #hard coded
-url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness"
+url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
 headers = {
         "User-Agent": "IBDScanner/0.1 - {email}}"
 }
-urlresponse = requests.get(url, headers=headers)
-data = urlresponse.json()
-print(data["product"]["product_name"])
-print(urlresponse.status_code)
+try:
+    urlresponse = requests.get(url, headers=headers, timeout=10)
+    data = urlresponse.json()
+except requests.exceptions.Timeout:
+    print("server took too long to respond!")
+except requests.exceptions.RequestException as error:
+    print(f"Request failed: {error}")
+else: 
+    if urlresponse.status_code != 200:
+        print(f"bad response: {urlresponse.status_code}")
+    elif data["status"] == 0:
+        print("Product does not exist")
+    else:
+        print(data["product"]["product_name"])
+        print(data["product"].keys())
+
