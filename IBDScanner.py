@@ -2,12 +2,16 @@ import requests
 import json
 import os
 
+with open ("rules.json") as f:
+    rules = json.load(f)
+    # print(rules.keys())
+
 email = os.getenv("EMAIL")
 barcode = "016000144811" #hard coded
 fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness"
 url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
 headers = {
-        "User-Agent": "IBDScanner/0.1 - {email}}"
+        "User-Agent": f"IBDScanner/0.1 - {email}"
 }
 try:
     urlresponse = requests.get(url, headers=headers, timeout=10)
@@ -25,6 +29,8 @@ else:
         print(data["product"]["product_name"])
         # print(data["product"].keys())
 
+ingredientList = data["product"]["ingredients"]
+additivesList = data["product"]["additives_tags"]
 def getLeaves(ingredientList):
     leaves=[]
     for ingredient in ingredientList:
@@ -35,4 +41,13 @@ def getLeaves(ingredientList):
             leaves.append(ingredient)
     return leaves
 
-print(getLeaves(data["product"]["ingredients"]))
+def checkPolyols(additivesList):
+    ruleCodes = rules["polyols"]["e_numbers"]
+    matches = []
+    for additive in additivesList:
+        if additive in ruleCodes:
+            matches.append(additive)
+    return matches
+
+# print(getLeaves(ingredientList))
+print(checkPolyols(additivesList))
