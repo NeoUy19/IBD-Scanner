@@ -4,10 +4,8 @@ import os
 
 with open ("rules.json") as f:
     rules = json.load(f)
-    # print(rules.keys())
-
 email = os.getenv("EMAIL")
-barcode = "016000144811" #hard coded
+barcode = "0818290016980" #hard coded
 fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness"
 url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
 headers = {
@@ -41,8 +39,8 @@ def getLeaves(ingredientList):
             leaves.append(ingredient)
     return leaves
 
-def checkPolyols(additivesList):
-    ruleCodes = rules["polyols"]["e_numbers"]
+def checkRule(ruleName,additivesList):
+    ruleCodes = rules[ruleName].get("e_numbers", [])
     matches = []
     for additive in additivesList:
         if additive in ruleCodes:
@@ -50,4 +48,9 @@ def checkPolyols(additivesList):
     return matches
 
 # print(getLeaves(ingredientList))
-print(checkPolyols(additivesList))
+for ruleName in rules:
+    matches = checkRule(ruleName, additivesList)
+    if matches:
+        print(f"{ruleName}: {matches}")
+
+
