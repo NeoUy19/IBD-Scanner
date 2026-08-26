@@ -1,0 +1,36 @@
+{
+    "polyols":{
+        "name": "Sugar alcohols",
+        "e_numbers": ["en:e420", "en:e421", "en:e953", "en:e965", "en:e966", "en:e967", "en:e968"],
+        "text_terms": ["sorbitol", "mannitol", "xylitol", "maltitol", "erythritol", "isomalt", "lactitol", "sugar alcohol"],
+        "severity": 2,
+        "evidence": "",
+        "explanation": "",
+        "references": []
+    },
+    "artificial_sweeteners":{
+        "name": "Non-nutritive sweeteners",
+        "category": "additives",
+        "e_numbers": ["en:e950", "en:e951", "en:e952", "en:e954", "en:e955", "en:e957", "en:e959", "en:e960", "en:e961", "en:e962", "en:e969"],
+        "text_terms": ["aspartame", "sucralose", "saccharin", "acesulfame", "cyclamate", "neotame", "advantame", "steviol", "stevia"],
+        "severity": 1,
+        "evidence": "",
+        "explanation": "",
+        "references": []
+    },
+    "emulsifiers":{
+        "name": "Emulsifiers, gums and thickeners",
+        "category": "additives",
+        "e_numbers": ["en:e407", "en:e407a", "en:e412", "en:e415", "en:e417", "en:e418", "en:e433", "en:e466", "en:e460", "en:e461", "en:e463", "en:e464", "en:e465"],
+        "text_terms": ["carrageenan", "carboxymethylcellulose", "cellulose gum", "polysorbate", "guar gum", "xanthan gum", "gellan gum", "tara gum", "locust bean gum"],
+        "severity": 2,
+        "evidence": "",
+        "explanation": "",
+        "references": []
+    },
+    "lactose":{},
+    "insoluble_fiber":{},
+    "high_fat":{}
+
+
+}

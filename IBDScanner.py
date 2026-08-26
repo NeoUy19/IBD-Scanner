@@ -5,30 +5,32 @@ import os
 with open ("rules.json") as f:
     rules = json.load(f)
 email = os.getenv("EMAIL")
-barcode = "0818290016980" #hard coded
 fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness"
-url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
 headers = {
         "User-Agent": f"IBDScanner/0.1 - {email}"
 }
-try:
-    urlresponse = requests.get(url, headers=headers, timeout=10)
-    data = urlresponse.json()
-except requests.exceptions.Timeout:
-    print("server took too long to respond!")
-except requests.exceptions.RequestException as error:
-    print(f"Request failed: {error}")
-else: 
-    if urlresponse.status_code != 200:
-        print(f"bad response: {urlresponse.status_code}")
-    elif data["status"] == 0:
-        print("Product does not exist")
-    else:
-        print(data["product"]["product_name"])
-        # print(data["product"].keys())
 
-ingredientList = data["product"]["ingredients"]
-additivesList = data["product"]["additives_tags"]
+def getProduct(barcode):
+    try:
+        url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
+        urlresponse = requests.get(url, headers=headers, timeout=10)
+        data = urlresponse.json()
+    except requests.exceptions.Timeout:
+        print("server took too long to respond!")
+    except requests.exceptions.RequestException as error:
+        print(f"Request failed: {error}")
+    else: 
+        if urlresponse.status_code != 200:
+            print(f"bad response: {urlresponse.status_code}")
+        elif data["status"] == 0:
+            print("Product does not exist")
+        else:
+            print(data["product"]["product_name"])
+            return {
+                 "additives": data["product"].get("additives_tags", []),
+                "leaves": getLeaves(data["product"].get("ingredients", []))
+            }
+
 def getLeaves(ingredientList):
     leaves=[]
     for ingredient in ingredientList:
@@ -47,10 +49,12 @@ def checkRule(ruleName,additivesList):
             matches.append(additive)
     return matches
 
-# print(getLeaves(ingredientList))
-for ruleName in rules:
-    matches = checkRule(ruleName, additivesList)
-    if matches:
-        print(f"{ruleName}: {matches}")
+barcode = input("Enter barcode: ")
+product = getProduct(barcode)
+if product:
+    for ruleName in rules:
+        matches = checkRule(ruleName, product["additives"])
+        if matches:
+            print(f"{ruleName}: {matches}")
 
 
