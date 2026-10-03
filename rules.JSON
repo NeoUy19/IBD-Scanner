@@ -1,11 +1,12 @@
 {
     "polyols":{
         "name": "Sugar alcohols",
+        "category": "additives",
         "e_numbers": ["en:e420", "en:e421", "en:e953", "en:e965", "en:e966", "en:e967", "en:e968"],
         "text_terms": ["sorbitol", "mannitol", "xylitol", "maltitol", "erythritol", "isomalt", "lactitol", "sugar alcohol"],
         "severity": 2,
-        "evidence": "",
-        "explanation": "",
+        "evidence": "moderate",
+        "explanation": "Sugar alcohols are poorly absorbed, so they draw water into the gut and are fermented by bacteria, which can cause gas, bloating and diarrhea. Commonly reported during flares and in people with overlapping IBS symptoms.",
         "references": []
     },
     "artificial_sweeteners":{
@@ -14,8 +15,8 @@
         "e_numbers": ["en:e950", "en:e951", "en:e952", "en:e954", "en:e955", "en:e957", "en:e959", "en:e960", "en:e961", "en:e962", "en:e969"],
         "text_terms": ["aspartame", "sucralose", "saccharin", "acesulfame", "cyclamate", "neotame", "advantame", "steviol", "stevia"],
         "severity": 1,
-        "evidence": "",
-        "explanation": "",
+        "evidence": "emerging",
+        "explanation": "Some sweeteners, such as sucralose, have been shown to alter gut bacteria in animal studies. Human evidence in IBD is limited.",
         "references": []
     },
     "emulsifiers":{
@@ -24,13 +25,48 @@
         "e_numbers": ["en:e407", "en:e407a", "en:e412", "en:e415", "en:e417", "en:e418", "en:e433", "en:e466", "en:e460", "en:e461", "en:e463", "en:e464", "en:e465"],
         "text_terms": ["carrageenan", "carboxymethylcellulose", "cellulose gum", "polysorbate", "guar gum", "xanthan gum", "gellan gum", "tara gum", "locust bean gum"],
         "severity": 2,
-        "evidence": "",
-        "explanation": "",
+        "evidence": "emerging",
+        "explanation": "Some emulsifiers (carrageenan, carboxymethylcellulose, polysorbate 80) may thin the protective mucus layer of the gut, mostly shown in animal studies. Relevant in both flare and remission.",
         "references": []
     },
-    "lactose":{},
-    "insoluble_fiber":{},
-    "high_fat":{}
-
-
+    "lactose":{
+        "name": "Lactose / dairy",
+        "category": "ingredients",
+        "allergens": ["en:milk"],
+        "ingredient_ids": ["en:dairy", "en:milk", "en:whole-milk", "en:skimmed-milk", "en:semi-skimmed-milk", "en:milk-powder", "en:skimmed-milk-powder", "en:whole-milk-powder", "en:condensed-milk", "en:sweetened-condensed-milk", "en:evaporated-milk", "en:whey", "en:whey-powder", "en:lactose", "en:cream", "en:buttermilk", "en:milk-solids", "en:ice-cream"],
+        "reduced_severity_ids": ["en:cheese", "en:hard-cheese", "en:parmesan", "en:cheddar", "en:butter", "en:yogurt", "en:milk-protein", "en:casein", "en:whey-protein-isolate"],
+        "text_terms": ["milk", "whey", "lactose", "cream", "buttermilk", "milk solids", "milk powder", "curds"],
+        "negative_terms": ["peanut butter", "cocoa butter", "shea butter", "nut butter", "coconut milk", "coconut cream", "cream of tartar", "non-dairy", "oat milk", "almond milk", "soy milk", "rice milk", "milk thistle", "lactic acid"],
+        "suppress_labels": ["en:no-lactose", "en:lactose-free", "en:vegan", "en:no-milk"],
+        "severity": 2,
+        "evidence": "strong",
+        "explanation": "Lactose intolerance is more common in IBD, especially Crohn's affecting the small bowel. Undigested lactose is fermented in the gut, causing gas, cramping and diarrhea. Hard cheese, butter and yogurt contain very little lactose.",
+        "notes": "Verify suppress_labels and reduced_severity_ids exist in the OFF taxonomy. lactic acid is not dairy despite the name.",
+        "references": []
+    },
+    "insoluble_fiber":{
+        "name": "Insoluble fiber",
+        "category": "ingredients",
+        "ingredient_ids": ["en:bran", "en:wheat-bran", "en:corn-bran", "en:rice-bran", "en:wheat-fibre", "en:oat-fibre", "en:whole-wheat-flour", "en:wholemeal-wheat-flour", "en:whole-grain", "en:brown-rice", "en:chia", "en:chia-seed", "en:flaxseed", "en:linseed", "en:sunflower-seed", "en:sesame-seed", "en:popcorn", "en:quinoa", "en:powdered-cellulose"],
+        "text_terms": ["bran", "whole wheat", "wholemeal", "whole grain", "oat fiber", "oat fibre", "wheat fiber", "wheat fibre", "chia", "flaxseed", "linseed", "sunflower seed", "sesame seed", "popcorn", "powdered cellulose"],
+        "suppress_categories": ["en:plant-based-milks", "en:plant-based-beverages", "en:juices"],
+        "severity": 2,
+        "evidence": "strong",
+        "explanation": "Insoluble fiber isn't broken down and adds bulk, which can worsen symptoms during a flare and risks blockage for people with strictures. Many people tolerate it well in remission.",
+        "notes": "Nuts, seeds with skins and raw vegetable skins are also high in insoluble fiber but too broad to match yet. Verify suppress_categories IDs.",
+        "references": []
+    },
+    "high_fat":{
+        "name": "High fat",
+        "category": "nutrients",
+        "thresholds": {
+            "fat_100g": 17.5,
+            "saturated-fat_100g": 5
+        },
+        "severity": 1,
+        "evidence": "moderate",
+        "explanation": "High-fat foods can speed up gut contractions and worsen diarrhea, especially with bile acid malabsorption after ileal resection.",
+        "notes": "Thresholds are the UK FSA 'high' cutoffs per 100g. Nutriment values in OFF can be wrong, so treat this as lower confidence.",
+        "references": []
+    }
 }

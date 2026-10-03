@@ -26,9 +26,15 @@ def getProduct(barcode):
             print("Product does not exist")
         else:
             print(data["product"]["product_name"])
+            leaves = getLeaves(data["product"].get("ingredients", []))
+            leafIds = []
+            for leaf in leaves:
+                leafIds.append(leaf.get("id"))
             return {
-                 "additives": data["product"].get("additives_tags", []),
-                "leaves": getLeaves(data["product"].get("ingredients", []))
+                "additives": data["product"].get("additives_tags", []),
+                "tags": data["product"].get("ingredients_tags", []),
+                "leaves": leaves,
+                "leafIds": leafIds
             }
 
 def getLeaves(ingredientList):
@@ -53,8 +59,14 @@ barcode = input("Enter barcode: ")
 product = getProduct(barcode)
 if product:
     for ruleName in rules:
-        matches = checkRule(ruleName, product["additives"])
-        if matches:
-            print(f"{ruleName}: {matches}")
+        addMatches = checkRule(ruleName, product["additives"])
+        leafMatches = checkRule(ruleName, product["leafIds"])
+        tagMatches = checkRule(ruleName, product["tags"])
+        if addMatches:
+            print(f"{ruleName} (additives): {addMatches}")
+        if leafMatches:
+            print(f"{ruleName} (leaves): {leafMatches}")
+        if tagMatches:
+            print(f"{ruleName} (tags): {tagMatches}")
 
 
