@@ -34,7 +34,8 @@ def getProduct(barcode):
                 "additives": data["product"].get("additives_tags", []),
                 "tags": data["product"].get("ingredients_tags", []),
                 "leaves": leaves,
-                "leafIds": leafIds
+                "leafIds": leafIds,
+                "ingredients": data["product"].get("ingredients_text_en", "").lower()
             }
 
 def getLeaves(ingredientList):
@@ -48,13 +49,21 @@ def getLeaves(ingredientList):
     return leaves
 
 def checkRule(ruleName,additivesList):
-    ruleCodes = rules[ruleName].get("e_numbers", [])
+    ruleCodes = rules[ruleName].get("e_numbers", []) + rules[ruleName].get("ingredient_ids", [])
     matches = []
     for additive in additivesList:
         if additive in ruleCodes:
             matches.append(additive)
     return matches
 
+def checkText(ruleName,text):
+    terms = rules[ruleName].get("text_terms", [])
+    validTerms = []
+    for term in terms:
+        if term in text:
+            validTerms.append(term)
+    return validTerms
+#Start the main loop
 barcode = input("Enter barcode: ")
 product = getProduct(barcode)
 if product:
@@ -62,11 +71,15 @@ if product:
         addMatches = checkRule(ruleName, product["additives"])
         leafMatches = checkRule(ruleName, product["leafIds"])
         tagMatches = checkRule(ruleName, product["tags"])
+        textMatches = checkText(ruleName, product["ingredients"])
+
         if addMatches:
             print(f"{ruleName} (additives): {addMatches}")
         if leafMatches:
             print(f"{ruleName} (leaves): {leafMatches}")
         if tagMatches:
             print(f"{ruleName} (tags): {tagMatches}")
+        if textMatches:
+            print(f"{ruleName} (ingredients): {textMatches}")
 
 
