@@ -35,7 +35,8 @@ def getProduct(barcode):
                 "tags": data["product"].get("ingredients_tags", []),
                 "leaves": leaves,
                 "leafIds": leafIds,
-                "ingredients": data["product"].get("ingredients_text_en", "").lower()
+                "ingredients": data["product"].get("ingredients_text_en", "").lower(),
+                "nutriments": data["product"].get("nutriments", {})
             }
 
 def getLeaves(ingredientList):
@@ -48,14 +49,13 @@ def getLeaves(ingredientList):
             leaves.append(ingredient)
     return leaves
 
-def checkRule(ruleName,additivesList):
+def checkRule(ruleName,tagList):
     ruleCodes = rules[ruleName].get("e_numbers", []) + rules[ruleName].get("ingredient_ids", [])
     matches = []
-    for additive in additivesList:
-        if additive in ruleCodes:
-            matches.append(additive)
+    for tag in tagList:
+        if tag in ruleCodes:
+            matches.append(tag)
     return matches
-
 def checkText(ruleName,text):
     terms = rules[ruleName].get("text_terms", [])
     validTerms = []
@@ -63,6 +63,15 @@ def checkText(ruleName,text):
         if term in text:
             validTerms.append(term)
     return validTerms
+def checkFats(nutriments):
+    fats = rules["high_fat"]["thresholds"]
+    matches = []
+    for key, limit in fats.items():
+        value = nutriments.get(key)
+        if (value is not None and value >=limit):
+            matches.append(f"{key}: {value}")
+    return matches
+            
 #Start the main loop
 barcode = input("Enter barcode: ")
 product = getProduct(barcode)
@@ -72,7 +81,7 @@ if product:
         leafMatches = checkRule(ruleName, product["leafIds"])
         tagMatches = checkRule(ruleName, product["tags"])
         textMatches = checkText(ruleName, product["ingredients"])
-
+    
         if addMatches:
             print(f"{ruleName} (additives): {addMatches}")
         if leafMatches:
@@ -81,5 +90,8 @@ if product:
             print(f"{ruleName} (tags): {tagMatches}")
         if textMatches:
             print(f"{ruleName} (ingredients): {textMatches}")
+    fatMatches = checkFats(product["nutriments"])
+    if fatMatches:
+        print(f"fat values: {fatMatches}")
 
 
