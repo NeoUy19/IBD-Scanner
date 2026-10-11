@@ -102,9 +102,14 @@ def scan(barcode):
     else:
         return {"error": "Product not found"}
     return returnDict
-
-barcode = input("Enter barcode: ")
-print(scan(barcode))
+def lambda_handler(event,context):
+    params = event.get("pathParameters") or {}
+    result = scan(params.get("barcode"))
+    return{"statusCode":200, "body": json.dumps(result)}
+    
+if __name__ == "__main__":
+    barcode = input("Enter barcode: ")
+    print(scan(barcode))
 
 
 
