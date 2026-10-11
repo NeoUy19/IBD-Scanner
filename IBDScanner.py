@@ -77,30 +77,34 @@ def hasData(product):
     else:
         return True
 #Start the main loop
-barcode = input("Enter barcode: ")
-product = getProduct(barcode)
-if product:
-    if (not hasData(product) ):
-        print ("Not enough ingredient data to check this product")
-    else:
+def scan(barcode):
+    product = getProduct(barcode)
+    if product:
+        if (not hasData(product) ):
+            return {"error": "Not enough ingredient data" }
+        returnDict = {}
         for ruleName in rules:
             addMatches = checkRule(ruleName, product["additives"])
             leafMatches = checkRule(ruleName, product["leafIds"])
             tagMatches = checkRule(ruleName, product["tags"])
             textMatches = checkText(ruleName, product["ingredients"])
-        
-            if addMatches:
-                print(f"{ruleName} (additives): {addMatches}")
-            if leafMatches:
-                print(f"{ruleName} (leaves): {leafMatches}")
-            if tagMatches:
-                print(f"{ruleName} (tags): {tagMatches}")
-            if textMatches:
-                print(f"{ruleName} (ingredients): {textMatches}")
-    fatMatches = checkFats(product["nutriments"])
-    if ("fat_100g" not in product["nutriments"]):
-        print("unknown fat value")
-    elif fatMatches:
-        print(f"fat values: {fatMatches}")
+            returnDict[ruleName] = {
+                "additive": addMatches,
+                "leaves": leafMatches,
+                "tags": tagMatches,
+                "ingredients": textMatches
+            }
+        fatMatches = checkFats(product["nutriments"])
+        if ("fat_100g" not in product["nutriments"]):
+            returnDict["fat"] = "Unknown"
+        elif fatMatches:
+            returnDict["fat"] = {"fat values": fatMatches}
+    else:
+        return {"error": "Product not found"}
+    return returnDict
+
+barcode = input("Enter barcode: ")
+print(scan(barcode))
+
 
 
