@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neo's IBD Scanner</title>
+  </head>
+  <body>
+    <h1>IBD Scanner</h1>
+    <p style="background: #fff3cd; color: #664d03; padding: 12px; border-radius: 6px">
+      This flags ingredients <strong>commonly reported</strong> as IBD triggers. It can't
+      predict how your body will react, and finding nothing doesn't mean a food is safe for
+      you. You know your body better than an algorithm. Talk to your care team about your diet.
+    </p>
+    <input id="barcode" placeholder="Enter a barcode" />
+    <button id="scanBtn">Scan</button>
+    <div id="results" style="white-space: pre-line"></div>
+    <script src="config.js"></script>
+    <script>
+      document
+        .getElementById("scanBtn")
+        .addEventListener("click", async function () {
+          const barcode = document.getElementById("barcode").value;
+          const response = await fetch(`${API_URL}${barcode}`, {
+            headers: { "x-api-key": API_KEY },
+          });
+          const data = await response.json();
+          console.log(data);
+          const results = document.getElementById("results");
+
+          if (data.error) {
+            results.textContent = data.error;
+            return;
+          }
+
+          let output = "";
+
+          if (data.fat === "Unknown") {
+            output += "fat: unknown (no fat data)\n";
+          } else if (data.fat) {
+            output += "fat: " + data.fat["fat values"].join(", ") + "\n";
+          }
+
+          for (const ruleName in data) {
+            if (ruleName === "fat") continue;
+            const r = data[ruleName];
+            const matches = [
+              ...r.additive,
+              ...r.leaves,
+              ...r.tags,
+              ...r.ingredients,
+            ];
+            const unique = [...new Set(matches)];
+            if (unique.length > 0) {
+              output += ruleName + ": " + unique.join(", ") + "\n";
+            }
+          }
+
+          if (output === "") {
+            output = "No commonly reported trigger ingredients found.";
+          }
+          results.textContent = output;
+        });
+    </script>
+  </body>
+</html>

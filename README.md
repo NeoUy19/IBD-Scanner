@@ -8,6 +8,14 @@ triggers vary a lot between people.
 Data comes from [Open Food Facts](https://world.openfoodfacts.org/), a free,
 crowd-sourced food label database.
 
+## Tech stack
+
+- **Backend:** Python 3.13 with `requests`, rules stored as JSON
+- **Hosting:** AWS Lambda (serverless)
+- **API:** AWS API Gateway (REST API, API-key auth, usage-plan rate limiting)
+- **Frontend:** HTML and JavaScript (`fetch`), no framework
+- **Data:** Open Food Facts API
+
 ## Status
 
 | Step |                                         |                    |
@@ -15,9 +23,9 @@ crowd-sourced food label database.
 | 1    | Test the Open Food Facts API by hand    | Done               |
 | 2    | Python script: trigger rules + matching | Done (v1)          |
 | 3    | Deploy as an AWS Lambda function        | Done               |
-| 4    | API Gateway in front, with an API key   | In progress        |
+| 4    | API Gateway in front, with an API key   | Done               |
 | 5    | DynamoDB cache                          | Planned (optional) |
-| 6    | Frontend (typed barcode, later webcam)  | Planned            |
+| 6    | Frontend (typed barcode, later webcam)  | Done (v0.1)        |
 
 ## How it works
 
@@ -34,6 +42,34 @@ Running locally:
 ```
 python IBDScanner.py
 ```
+
+## Frontend
+
+`ScannerFrontend/index.html` is a plain HTML + JavaScript page. You type a
+barcode, it calls the API and lists the triggers that matched.
+
+To run it, create `ScannerFrontend/config.js` (it's gitignored):
+
+```js
+const API_URL = "https://<api-id>.execute-api.<region>.amazonaws.com/prod/";
+const API_KEY = "<your API key>";
+```
+
+Then open `index.html` in a browser.
+
+## Future work
+
+- DynamoDB cache for repeat lookups
+- Rebuild the frontend in React instead of plain HTML + JavaScript
+- Webcam barcode scanning (html5-qrcode)
+- Product popup with image and full ingredient list
+- Fewer false positives: negative terms (peanut butter, coconut milk),
+  label/category suppression (strained oat milk), reduced severity for
+  low-lactose dairy
+- "Unknown" result when Open Food Facts failed to parse the ingredients
+- Separate 404 (not found) from 502 (Open Food Facts down)
+- Test set using known barcodes
+- Recommend healthier alternatives
 
 ---
 
@@ -139,9 +175,21 @@ returned `{"statusCode": ..., "body": ...}` back into an HTTP response.
   protects against surprise costs. (These are only available on the REST API
   type, not the HTTP API type.)
 
-## Git
+## Frontend (JavaScript)
 
-- `.gitignore` keeps build output (`function.zip`, `package/`), the virtual
-  environment and secrets out of the repo.
-- `git mv` renames a file in a way Git tracks, which matters on macOS where a
-  plain case-only rename can go unnoticed.
+- **The DOM:** the page as objects JavaScript can change.
+  `document.getElementById("results")` finds an element, and `.textContent`
+  sets its text.
+- **Event listeners:** `addEventListener("click", function)` runs code when
+  the button is clicked. Anything that reads the input has to be *inside* that
+  function, or it only runs once, when the page loads and the box is empty.
+- **`fetch` + `async`/`await`:** `fetch` sends the HTTP request, and `await`
+  waits for the reply. `response.json()` turns the body into an object, like
+  `json.loads` in Python.
+- **CORS:** browsers block a page from reading responses from another domain
+  unless the server allows it. My Lambda sends
+  `Access-Control-Allow-Origin: *` to allow it.
+- **Frontend keys aren't secret:** `config.js` keeps the API key out of Git,
+  but anyone using the page can see it in dev tools. The usage plan limits the
+  damage.
+
