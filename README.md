@@ -10,14 +10,14 @@ crowd-sourced food label database.
 
 ## Status
 
-| Step | | |
-|---|---|---|
-| 1 | Test the Open Food Facts API by hand | Done |
-| 2 | Python script: trigger rules + matching | Done (v1) |
-| 3 | Deploy as an AWS Lambda function | Done |
-| 4 | API Gateway in front, with an API key | In progress |
-| 5 | DynamoDB cache | Planned (optional) |
-| 6 | Frontend (typed barcode, later webcam) | Planned |
+| Step |                                         |                    |
+| ---- | --------------------------------------- | ------------------ |
+| 1    | Test the Open Food Facts API by hand    | Done               |
+| 2    | Python script: trigger rules + matching | Done (v1)          |
+| 3    | Deploy as an AWS Lambda function        | Done               |
+| 4    | API Gateway in front, with an API key   | In progress        |
+| 5    | DynamoDB cache                          | Planned (optional) |
+| 6    | Frontend (typed barcode, later webcam)  | Planned            |
 
 ## How it works
 
@@ -100,7 +100,7 @@ over HTTP to get or change data, following those conventions.
   printing results, so the same function can be used from the terminal, from
   Lambda or from a web server.
 - **`if __name__ == "__main__":`** runs code only when the file is started
-  directly, not when it's imported. Lambda *imports* my file, so `input()` has
+  directly, not when it's imported. Lambda _imports_ my file, so `input()` has
   to sit behind this check or the function would hang.
 - **Environment variables** (`os.getenv("EMAIL")`) keep personal or secret
   values out of the code and out of Git. They're set on my machine locally and

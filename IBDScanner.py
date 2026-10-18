@@ -105,7 +105,16 @@ def scan(barcode):
 def lambda_handler(event,context):
     params = event.get("pathParameters") or {}
     result = scan(params.get("barcode"))
-    return{"statusCode":200, "body": json.dumps(result)}
+    status = 200
+    if "error" in result:
+        status = 404
+    return{
+        "statusCode": status,
+        "body": json.dumps(result),
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
+        }
+    }
     
 if __name__ == "__main__":
     barcode = input("Enter barcode: ")
