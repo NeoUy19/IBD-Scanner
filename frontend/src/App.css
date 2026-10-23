@@ -1,0 +1,27 @@
+main {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 0 16px;
+  font-family: system-ui, sans-serif;
+}
+
+.disclaimer {
+  background: #fff3cd;
+  color: #664d03;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+form {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  flex: 1;
+  padding: 8px;
+}
+
+.error {
+  color: #b42318;
+}
