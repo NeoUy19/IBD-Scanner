@@ -25,3 +25,10 @@ input {
 .error {
   color: #b42318;
 }
+
+/* TODO (scanner page styles):
+   .scanner         -> position: relative; a tall shape with aspect-ratio (e.g. 3 / 4)
+   .scan-frame      -> position: absolute; centred box with a border, where the barcode goes
+   .scan-hint       -> text under or over the frame
+   .scan-frame.detected -> different border colour so it's clear it found one
+   Optional: a moving line inside the frame using @keyframes to show it's scanning */

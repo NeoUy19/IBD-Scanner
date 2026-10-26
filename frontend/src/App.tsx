@@ -102,6 +102,9 @@ function App() {
         </button>
       </form>
       <button onClick={() =>setShowCamera(!showCamera)}>{showCamera ? 'Close camera' : 'Open camera'}</button>
+      {/* TODO (scanner page): optional, when showCamera is true, show only the
+          scanner and a Close button (hide the form and results) so it feels
+          like its own full vertical page. A ternary around the page works. */}
       {showCamera && <Scanner onScan={handleCameraScan} />}
 
       {error && <p className="error">{error}</p>}
