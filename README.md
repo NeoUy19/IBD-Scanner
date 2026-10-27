@@ -218,3 +218,30 @@ returned `{"statusCode": ..., "body": ...}` back into an HTTP response.
   but anyone using the page can see it in dev tools. The usage plan limits the
   damage.
 
+
+## Frontend (React + TypeScript)
+
+- **`.tsx`** is TypeScript plus JSX. Types are checked in the editor and by
+  `npm run build`, then erased; the browser only runs plain JavaScript.
+- **JSX rules:** `className` instead of `class`, every tag closes (`<input />`),
+  one parent element per `return` (a fragment `<> </>` works), and attributes
+  set from JavaScript use `{ }` instead of quotes.
+- **`useState`** holds values that change. Calling the setter (`setLines(...)`)
+  re-renders the page, which replaces `getElementById` + `textContent`.
+- **Controlled input:** `value={barcode}` + `onChange` keep the box and the
+  state in sync. `<form onSubmit>` + `preventDefault()` lets Enter submit
+  without reloading the page.
+- **Conditional rendering:** `{error && <p>...</p>}` and the ternary
+  `{detected ? "Scanning..." : "Line up..."}`. A ternary inside `className`
+  switches classes on and off.
+- **Components and props:** `Scanner` gets an `onScan` callback, so it doesn't
+  need to know what happens with the barcode.
+- **`useEffect`** runs after the component appears. Its cleanup function stops
+  the camera when the scanner closes. In development, StrictMode runs effects
+  twice to catch missing cleanup.
+- **A plain `let` vs state:** the `done` guard is a `let`, because it doesn't
+  change what's on screen; it only remembers that a barcode was already read.
+- **`id` vs `className`:** an id is unique (html5-qrcode finds `#reader` by
+  id); classes are shared style labels, and an element can have several.
+- **Vite env variables:** only `VITE_` variables from `.env.local` reach the
+  browser. Restart `npm run dev` after changing them.
