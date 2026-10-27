@@ -33,10 +33,10 @@ function Scanner({ onScan }: ScannerProps) {
     };
   }, []);
   return (
-    <div className="scanner">
+    <div className={detected ? "scanner detected" : "scanner"}>
       <div id="reader" />
       <p className="scan-hint">
-        {detected ? "Scanning..." : "Line up barcode within the box"}{" "}
+        {detected ? "Scanning..." : "Line up barcode within the box"}
       </p>
     </div>
   );
