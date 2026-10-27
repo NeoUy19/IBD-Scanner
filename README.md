@@ -13,7 +13,8 @@ crowd-sourced food label database.
 - **Backend:** Python 3.13 with `requests`, rules stored as JSON
 - **Hosting:** AWS Lambda (serverless)
 - **API:** AWS API Gateway (REST API, API-key auth, usage-plan rate limiting)
-- **Frontend:** HTML and JavaScript (`fetch`), no framework
+- **Frontend:** React + TypeScript, built with Vite; camera scanning with
+  `html5-qrcode`
 - **Data:** Open Food Facts API
 
 ## Status
@@ -25,7 +26,7 @@ crowd-sourced food label database.
 | 3    | Deploy as an AWS Lambda function        | Done               |
 | 4    | API Gateway in front, with an API key   | Done               |
 | 5    | DynamoDB cache                          | Planned (optional) |
-| 6    | Frontend (typed barcode, later webcam)  | Done (v0.1)        |
+| 6    | Frontend (typed barcode + camera scan)  | Done (v0.2.5)      |
 
 ## How it works
 
@@ -45,23 +46,47 @@ python IBDScanner.py
 
 ## Frontend
 
-`ScannerFrontend/index.html` is a plain HTML + JavaScript page. You type a
-barcode, it calls the API and lists the triggers that matched.
+The frontend in `frontend/` is a React + TypeScript app built with Vite. You
+type a barcode or scan one with the camera, and it lists the triggers that
+matched.
 
-To run it, create `ScannerFrontend/config.js` (it's gitignored):
+- `src/App.tsx`: the page, the API call and the results list
+- `src/components/Scanner.tsx`: the camera scanner. It shows a portrait video
+  with a guide box, ignores repeat reads, and turns green with "Scanning..."
+  when it finds a barcode.
 
-```js
-const API_URL = "https://<api-id>.execute-api.<region>.amazonaws.com/prod/";
-const API_KEY = "<your API key>";
+To run it, create `frontend/.env.local` (it's gitignored):
+
+```
+VITE_API_URL=https://<api-id>.execute-api.<region>.amazonaws.com/prod/
+VITE_API_KEY=<your API key>
 ```
 
-Then open `index.html` in a browser.
+Then:
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+and open the URL it prints. The camera works on `localhost`; other devices need
+the site served over HTTPS.
+
+The original plain HTML version (v0.1.0) is still in `ScannerFrontend/`.
+
+## Releases
+
+| Version | What changed |
+| ------- | ------------ |
+| v0.2.5  | Scanner page: portrait camera view, guide box, "detected" visual |
+| v0.2.0  | React + TypeScript frontend with camera scanning |
+| v0.1.0  | Lambda + API Gateway backend, plain HTML frontend |
 
 ## Future work
 
 - DynamoDB cache for repeat lookups
-- Rebuild the frontend in React instead of plain HTML + JavaScript
-- Webcam barcode scanning (html5-qrcode)
+- Deploy the frontend over HTTPS so the camera works on phones
 - Product popup with image and full ingredient list
 - Fewer false positives: negative terms (peanut butter, coconut milk),
   label/category suppression (strained oat milk), reduced severity for
