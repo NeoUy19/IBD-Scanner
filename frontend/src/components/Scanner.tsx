@@ -1,27 +1,27 @@
 import { Html5Qrcode } from "html5-qrcode";
 import { useEffect, useState } from "react";
 
-
 type ScannerProps = {
   onScan: (barcode: string) => void;
 };
-
 function Scanner({ onScan }: ScannerProps) {
-  const [detected, setDetected] = useState(false)
-  
+  const [detected, setDetected] = useState(false);
+
   useEffect(() => {
     const scanner = new Html5Qrcode("reader");
+    let done = false; // set to true after the first read, so repeats are ignored
 
     const started = scanner.start(
       { facingMode: "environment" },
-      // TODO (vertical + guide box): html5-qrcode takes more settings here.
-      // Look up `qrbox` (the area it scans in, wide and short suits barcodes)
-      // and `aspectRatio` (a value under 1 makes the video taller than wide).
-      { fps: 10 },
-      // TODO (scanning visual): before calling onScan, set `detected` to true.
-      // Optional: wait a moment (setTimeout) so the user sees the visual
-      // before App hides the scanner.
-      (text) => onScan(text),
+      { fps: 10, qrbox: { width: 200, height: 100 }, aspectRatio: 1 },
+      (text) => {
+        if (done) return;
+        done = true;
+        setDetected(true);
+        setTimeout(() => {
+          onScan(text);
+        }, 600);
+      },
       undefined,
     );
 
@@ -32,13 +32,13 @@ function Scanner({ onScan }: ScannerProps) {
         .catch(() => {});
     };
   }, []);
-  // TODO (layout): wrap #reader in a container div (e.g. className="scanner")
-  // and put an overlay inside it on top of the video:
-  //   - a frame showing where the barcode goes
-  //   - a hint like "Line up the barcode inside the box"
-  //   - when `detected` is true: change the frame's class (e.g. "detected")
-  //     and the hint text (e.g. "Scanning...")
-  // Use a ternary or {detected && ...} like in App.tsx.
-  return <div id="reader" />;
+  return (
+    <div className="scanner">
+      <div id="reader" />
+      <p className="scan-hint">
+        {detected ? "Scanning..." : "Line up barcode within the box"}{" "}
+      </p>
+    </div>
+  );
 }
 export default Scanner;

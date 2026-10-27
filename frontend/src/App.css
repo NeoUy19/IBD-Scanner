@@ -26,6 +26,14 @@ input {
   color: #b42318;
 }
 
+.scanner {
+  max-width: 360px;
+  margin: 16px auto;
+}
+.scan-hint {
+  text-align: center;
+  color: #555;
+}
 /* TODO (scanner page styles):
    .scanner         -> position: relative; a tall shape with aspect-ratio (e.g. 3 / 4)
    .scan-frame      -> position: absolute; centred box with a border, where the barcode goes
