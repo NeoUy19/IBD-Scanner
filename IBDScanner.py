@@ -5,6 +5,8 @@ import os
 with open ("rules.json") as f:
     rules = json.load(f)
 email = os.getenv("EMAIL")
+# TODO (product image): add image_front_small_url to this list
+# (image_front_url is the full-size version).
 fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness"
 headers = {
         "User-Agent": f"IBDScanner/0.1 - {email}"
@@ -37,6 +39,9 @@ def getProduct(barcode):
                 "leafIds": leafIds,
                 "ingredients": data["product"].get("ingredients_text_en", "").lower(),
                 "nutriments": data["product"].get("nutriments", {})
+                # TODO (product image): also return "name" (product_name),
+                # "brand" (brands) and "image" (image_front_small_url).
+                # Use .get() with defaults — many products have no photo.
             }
 
 def getLeaves(ingredientList):
@@ -82,12 +87,22 @@ def scan(barcode):
     if product:
         if (not hasData(product) ):
             return {"error": "Not enough ingredient data" }
+        # TODO (product image): change the JSON shape so product info and rule
+        # results are kept apart:
+        #   {"product": {"name": ..., "brand": ..., "image": ...},
+        #    "flags": {"lactose": {...}, "fat": {...}, ...}}
+        # Build the rule results in a "flags" dict, then return both.
+        # The frontend's types and toLines must change to match (see App.tsx).
         returnDict = {}
         for ruleName in rules:
             addMatches = checkRule(ruleName, product["additives"])
             leafMatches = checkRule(ruleName, product["leafIds"])
             tagMatches = checkRule(ruleName, product["tags"])
             textMatches = checkText(ruleName, product["ingredients"])
+            # TODO (explanations): every rule in rules.json already has "name"
+            # and "explanation" (and "evidence"). Add them to this dict, e.g.
+            # "name": rules[ruleName]["name"] — use .get() with a default in
+            # case a rule is missing one. The frontend can then show *why*.
             returnDict[ruleName] = {
                 "additive": addMatches,
                 "leaves": leafMatches,
@@ -95,10 +110,16 @@ def scan(barcode):
                 "ingredients": textMatches
             }
         fatMatches = checkFats(product["nutriments"])
+        # TODO (explanations): fat's explanation lives under rules["high_fat"].
+        # Add it to the dict below too (the "Unknown" case can stay a string,
+        # or become a dict with a "status" key — your choice, but update the
+        # FatResult type in App.tsx to match).
         if ("fat_100g" not in product["nutriments"]):
             returnDict["fat"] = "Unknown"
         elif fatMatches:
             returnDict["fat"] = {"fat values": fatMatches}
+        # TODO (deploy): the explanations only reach the site after you paste
+        # this file into the Lambda console and click Deploy.
     else:
         return {"error": "Product not found"}
     return returnDict
