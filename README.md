@@ -214,9 +214,6 @@ returned `{"statusCode": ..., "body": ...}` back into an HTTP response.
 - **CORS:** browsers block a page from reading responses from another domain
   unless the server allows it. My Lambda sends
   `Access-Control-Allow-Origin: *` to allow it.
-- **Frontend keys aren't secret:** `config.js` keeps the API key out of Git,
-  but anyone using the page can see it in dev tools. The usage plan limits the
-  damage.
 
 
 ## Frontend (React + TypeScript)
