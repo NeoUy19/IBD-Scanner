@@ -3,7 +3,6 @@ import type { FormEvent } from "react";
 import "./App.css";
 import Scanner from "./components/Scanner";
 
-
 type RuleMatches = {
   additive: string[];
   leaves: string[];
@@ -12,25 +11,30 @@ type RuleMatches = {
   name: string;
   explanation: string;
 };
-type FatResult = "Unknown" | { 
-    "fat values": string[];
-    "name": string;
-    "explanation": string;
-  };
+type FatResult =
+  | "Unknown"
+  | {
+      "fat values": string[];
+      name: string;
+      explanation: string;
+    };
 
-  type Product  = {
-    name: string;
-    brand: string;
-    image: string;
-  }
+type Product = {
+  name: string;
+  brand: string;
+  image: string;
+};
 
 type Flag = {
-  name: string; 
+  name: string;
   matches: string[];
   explanation: string;
 };
 
-type ScanResponse = { info: Product; flags: Record<string, RuleMatches | FatResult>};
+type ScanResponse = {
+  info: Product;
+  flags: Record<string, RuleMatches | FatResult>;
+};
 
 const API_URL = import.meta.env.VITE_API_URL;
 const API_KEY = import.meta.env.VITE_API_KEY;
@@ -41,23 +45,26 @@ function toFlags(data: ScanResponse): Flag[] {
 
   const fat = data.flags.fat as FatResult | undefined;
   if (fat === "Unknown") {
-    lines.push({name: "High fat", matches: ["No fat values"], explanation:"Fat content could not be checked for this product"});
+    lines.push({
+      name: "High fat",
+      matches: ["No fat values"],
+      explanation: "Fat content could not be checked for this product",
+    });
   } else if (fat) {
-    lines.push({ name: fat.name, matches: fat["fat values"], explanation: fat.explanation});
+    lines.push({
+      name: fat.name,
+      matches: fat["fat values"],
+      explanation: fat.explanation,
+    });
   }
 
-  // TODO (product image): after the backend change, the rules live under
-  // data.flags, so loop over Object.entries(data.flags) instead (and read
-  // fat from data.flags.fat). Add a `Product` type
-  //   { name: string; brand: string; image: string }
-  // and update ScanResponse to { product: Product; flags: ... }.
   for (const [ruleName, value] of Object.entries(data.flags)) {
     if (ruleName === "fat") continue;
     const r = value as RuleMatches;
     const matches = [...r.additive, ...r.leaves, ...r.tags, ...r.ingredients];
     const unique = [...new Set(matches)];
     if (unique.length > 0) {
-      lines.push({name: r.name, matches:unique, explanation: r.explanation});
+      lines.push({ name: r.name, matches: unique, explanation: r.explanation });
     }
   }
 
@@ -69,14 +76,15 @@ function App() {
   const [lines, setLines] = useState<Flag[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const[showCamera,setShowCamera] = useState(false)
+  const [showCamera, setShowCamera] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
-
+  const [product, setProduct] = useState<Product | null>(null);
 
   async function scanBarcode(code: string) {
     setLoading(true);
     setError(null);
     setLines(null);
+    setProduct(null);
 
     try {
       const response = await fetch(API_URL + code, {
@@ -86,9 +94,7 @@ function App() {
       if (data.error) {
         setError(data.error);
       } else {
-        // TODO (product image): also save data.product in a new state,
-        // e.g. useState<Product | null>(null), and clear it at the start
-        // of each scan like setLines(null).
+        setProduct(data.info);
         setLines(toFlags(data));
       }
     } catch {
@@ -102,10 +108,10 @@ function App() {
     scanBarcode(barcode);
   }
 
-  function handleCameraScan(code: string){
-    setShowCamera(false)
-    setBarcode(code)
-    scanBarcode(code)
+  function handleCameraScan(code: string) {
+    setShowCamera(false);
+    setBarcode(code);
+    scanBarcode(code);
   }
 
   return (
@@ -137,7 +143,9 @@ function App() {
           {loading ? "Scanning..." : "Scan"}
         </button>
       </form>
-      <button onClick={() =>setShowCamera(!showCamera)}>{showCamera ? 'Close camera' : 'Open camera'}</button>
+      <button onClick={() => setShowCamera(!showCamera)}>
+        {showCamera ? "Close camera" : "Open camera"}
+      </button>
       {/* TODO (scanner page): optional, when showCamera is true, show only the
           scanner and a Close button (hide the form and results) so it feels
           like its own full vertical page. A ternary around the page works. */}
@@ -149,23 +157,17 @@ function App() {
         <p>No commonly reported trigger ingredients found.</p>
       )}
 
-      {/* TODO (product image): above the results, show the product:
-            - the name (and brand) as a heading
-            - {product.image && <img src={product.image} alt={product.name} />}
-              so products with no photo don't show a broken image
-          Give the img a max width in App.css (e.g. 120px). */}
-
-      {/* TODO (explanations): render each Flag as a card instead of one line:
-            - the trigger name as a heading
-            - "Found: " + the matched ingredients
-            - the explanation in smaller text underneath
-          Optional: hide the explanation behind a "Why?" button, using a
-          <details><summary>Why?</summary>...</details> element (no state
-          needed). Wording must stay "commonly reported", never "unsafe". */}
+      {product && (
+        <div className="product">
+          <h1>{product.name}</h1>
+          <p>{product.brand}</p>
+          {product.image && <img src={product.image} alt={product.name} />}
+        </div>
+      )}
       {lines && lines.length > 0 && (
         <ul>
           {lines.map((r) => (
-            <li key = {r.name}>
+            <li key={r.name}>
               <h3>{r.name}</h3>
               <p>Found: {r.matches.join(", ")}</p>
               <p>{r.explanation}</p>
