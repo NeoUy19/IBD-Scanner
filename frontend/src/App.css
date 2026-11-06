@@ -59,7 +59,7 @@ input {
   border-radius: 8px;
 }
 .scanner.detected .scan-hint{
-  outline:3s #16a34a;
+  color:#16a34a;
   font-weight: 600;
 }
 
