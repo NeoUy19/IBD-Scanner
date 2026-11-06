@@ -91,10 +91,6 @@ def scan(barcode):
             leafMatches = checkRule(ruleName, product["leafIds"])
             tagMatches = checkRule(ruleName, product["tags"])
             textMatches = checkText(ruleName, product["ingredients"])
-            # TODO (explanations): every rule in rules.json already has "name"
-            # and "explanation" (and "evidence"). Add them to this dict, e.g.
-            # "name": rules[ruleName]["name"] — use .get() with a default in
-            # case a rule is missing one. The frontend can then show *why*.
             flags[ruleName] = {
                 "name": rules[ruleName].get("name", ruleName),
                 "explanation": rules[ruleName].get("explanation", ""),
@@ -104,21 +100,15 @@ def scan(barcode):
                 "ingredients": textMatches
             }
         fatMatches = checkFats(product["nutriments"])
-        # TODO (explanations): fat's explanation lives under rules["high_fat"].
-        # Add it to the dict below too (the "Unknown" case can stay a string,
-        # or become a dict with a "status" key — your choice, but update the
-        # FatResult type in App.tsx to match).
         if ("fat_100g" not in product["nutriments"]):
             flags["fat"] = "Unknown"
         elif fatMatches:
             flags["fat"] = {
                 "name": rules["high_fat"].get("name", "High fat"),
-                "explanation": rules[ruleName].get("explanation", ""),
+                "explanation": rules["high_fat"].get("explanation", ""),
                 "fat values": fatMatches,
 
                             }
-        # TODO (deploy): the explanations only reach the site after you paste
-        # this file into the Lambda console and click Deploy.
     else:
         return {"error": "Product not found"}
     return {
