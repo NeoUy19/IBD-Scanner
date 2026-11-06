@@ -107,8 +107,7 @@ def scan(barcode):
                 "name": rules["high_fat"].get("name", "High fat"),
                 "explanation": rules["high_fat"].get("explanation", ""),
                 "fat values": fatMatches,
-
-                            }
+                }
     else:
         return {"error": "Product not found"}
     return {

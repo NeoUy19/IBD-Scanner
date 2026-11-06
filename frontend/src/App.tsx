@@ -4,36 +4,46 @@ import "./App.css";
 import Scanner from "./components/Scanner";
 
 
-// The shapes of the data the API sends back
-// TODO (explanations): once the backend sends them, add `name: string` and
-// `explanation: string` to RuleMatches (and to the fat type).
 type RuleMatches = {
   additive: string[];
   leaves: string[];
   tags: string[];
   ingredients: string[];
+  name: string;
+  explanation: string;
 };
-type FatResult = "Unknown" | { "fat values": string[] };
+type FatResult = "Unknown" | { 
+    "fat values": string[];
+    "name": string;
+    "explanation": string;
+  };
 
-// TODO (explanations): `lines` is a list of plain strings, which can't hold an
-// explanation. Make a type for one flagged trigger, e.g.
-//   type Flag = { name: string; matches: string[]; explanation: string };
-// then have toLines return Flag[] (rename it, e.g. toFlags) and change the
-// `lines` state to useState<Flag[] | null>.
-type ScanResponse = Record<string, RuleMatches | FatResult | string>;
+  type Product  = {
+    name: string;
+    brand: string;
+    image: string;
+  }
+
+type Flag = {
+  name: string; 
+  matches: string[];
+  explanation: string;
+};
+
+type ScanResponse = { info: Product; flags: Record<string, RuleMatches | FatResult>};
 
 const API_URL = import.meta.env.VITE_API_URL;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 // Turns the API response into readable lines like "lactose: milk, milk powder"
-function toLines(data: ScanResponse): string[] {
-  const lines: string[] = [];
+function toFlags(data: ScanResponse): Flag[] {
+  const lines: Flag[] = [];
 
-  const fat = data.fat as FatResult | undefined;
+  const fat = data.flags.fat as FatResult | undefined;
   if (fat === "Unknown") {
-    lines.push("fat: unknown (no fat data)");
+    lines.push({name: "High fat", matches: ["No fat values"], explanation:"Fat content could not be checked for this product"});
   } else if (fat) {
-    lines.push("fat: " + fat["fat values"].join(", "));
+    lines.push({ name: fat.name, matches: fat["fat values"], explanation: fat.explanation});
   }
 
   // TODO (product image): after the backend change, the rules live under
@@ -41,13 +51,13 @@ function toLines(data: ScanResponse): string[] {
   // fat from data.flags.fat). Add a `Product` type
   //   { name: string; brand: string; image: string }
   // and update ScanResponse to { product: Product; flags: ... }.
-  for (const [ruleName, value] of Object.entries(data)) {
+  for (const [ruleName, value] of Object.entries(data.flags)) {
     if (ruleName === "fat") continue;
     const r = value as RuleMatches;
     const matches = [...r.additive, ...r.leaves, ...r.tags, ...r.ingredients];
     const unique = [...new Set(matches)];
     if (unique.length > 0) {
-      lines.push(ruleName + ": " + unique.join(", "));
+      lines.push({name: r.name, matches:unique, explanation: r.explanation});
     }
   }
 
@@ -56,7 +66,7 @@ function toLines(data: ScanResponse): string[] {
 
 function App() {
   const [barcode, setBarcode] = useState("");
-  const [lines, setLines] = useState<string[] | null>(null);
+  const [lines, setLines] = useState<Flag[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const[showCamera,setShowCamera] = useState(false)
@@ -79,7 +89,7 @@ function App() {
         // TODO (product image): also save data.product in a new state,
         // e.g. useState<Product | null>(null), and clear it at the start
         // of each scan like setLines(null).
-        setLines(toLines(data));
+        setLines(toFlags(data));
       }
     } catch {
       setError("Could not reach the scanner. Try again.");
@@ -154,8 +164,12 @@ function App() {
           needed). Wording must stay "commonly reported", never "unsafe". */}
       {lines && lines.length > 0 && (
         <ul>
-          {lines.map((line) => (
-            <li key={line}>{line}</li>
+          {lines.map((r) => (
+            <li key = {r.name}>
+              <h3>{r.name}</h3>
+              <p>Found: {r.matches.join(", ")}</p>
+              <p>{r.explanation}</p>
+            </li>
           ))}
         </ul>
       )}
