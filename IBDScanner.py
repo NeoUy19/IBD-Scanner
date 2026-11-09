@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import time
 import boto3
 
 with open ("rules.json") as f:
@@ -48,7 +49,8 @@ def getProduct(barcode):
             print(data["product"]["product_name"])
             table.put_item(Item={
                 "barcode": barcode,
-                "Product": json.dumps(data["product"])
+                "Product": json.dumps(data["product"]),
+                "expiresAt": int(time.time()) + 30 * 24 * 60 * 60
             })
             return buildProduct(data["product"])
 
