@@ -1,17 +1,37 @@
 import requests
 import json
 import os
+import boto3
 
 with open ("rules.json") as f:
     rules = json.load(f)
+table = boto3.resource("dynamodb").Table("IBDScannerCache")
 email = os.getenv("EMAIL")
 fields = "product_name,brands,ingredients,ingredients_tags,ingredients_text_en,additives_tags,allergens_tags,labels_tags,categories_tags,ingredients_analysis_tags,nutriments,nutrient_levels,nova_group,completeness,image_front_small_url"
 headers = {
         "User-Agent": f"IBDScanner/0.1 - {email}"
 }
-
+def buildProduct(raw):
+    leaves = getLeaves(raw.get("ingredients", []))
+    leafIds = []
+    for leaf in leaves:
+        leafIds.append(leaf.get("id"))
+    return {
+                    "additives": raw.get("additives_tags", []),
+                    "tags": raw.get("ingredients_tags", []),
+                    "leaves": leaves,
+                    "leafIds": leafIds,
+                    "ingredients": raw.get("ingredients_text_en", "").lower(),
+                    "nutriments": raw.get("nutriments", {}),
+                    "name":  raw.get("product_name", ""),
+                    "brand": raw.get("brands",""),
+                    "image": raw.get("image_front_small_url", "")
+                }
 def getProduct(barcode):
     try:
+        cacheResponse = table.get_item(Key={"barcode": barcode})
+        if "Item" in cacheResponse:
+            return buildProduct(json.loads(cacheResponse["Item"]["Product"]))
         url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
         urlresponse = requests.get(url, headers=headers, timeout=10)
         data = urlresponse.json()
@@ -26,21 +46,11 @@ def getProduct(barcode):
             print("Product does not exist")
         else:
             print(data["product"]["product_name"])
-            leaves = getLeaves(data["product"].get("ingredients", []))
-            leafIds = []
-            for leaf in leaves:
-                leafIds.append(leaf.get("id"))
-            return {
-                "additives": data["product"].get("additives_tags", []),
-                "tags": data["product"].get("ingredients_tags", []),
-                "leaves": leaves,
-                "leafIds": leafIds,
-                "ingredients": data["product"].get("ingredients_text_en", "").lower(),
-                "nutriments": data["product"].get("nutriments", {}),
-                "name":  data["product"].get("product_name", ""),
-                "brand": data["product"].get("brands",""),
-                "image": data["product"].get("image_front_small_url", "")
-            }
+            table.put_item(Item={
+                "barcode": barcode,
+                "Product": json.dumps(data["product"])
+            })
+            return buildProduct(data["product"])
 
 def getLeaves(ingredientList):
     leaves=[]
