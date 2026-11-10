@@ -146,9 +146,6 @@ function App() {
       <button onClick={() => setShowCamera(!showCamera)}>
         {showCamera ? "Close camera" : "Open camera"}
       </button>
-      {/* TODO (scanner page): optional, when showCamera is true, show only the
-          scanner and a Close button (hide the form and results) so it feels
-          like its own full vertical page. A ternary around the page works. */}
       {showCamera && <Scanner onScan={handleCameraScan} />}
 
       {error && <p className="error">{error}</p>}
@@ -159,7 +156,7 @@ function App() {
 
       {product && (
         <div className="product">
-          <h1>{product.name}</h1>
+          <h2>{product.name}</h2>
           <p>{product.brand}</p>
           {product.image && <img src={product.image} alt={product.name} />}
         </div>

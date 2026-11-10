@@ -10,11 +10,12 @@ crowd-sourced food label database.
 
 ## Tech stack
 
-- **Backend:** Python 3.13 with `requests`, rules stored as JSON
+- **Backend:** Python 3.13 with `requests` and `boto3`, rules stored as JSON
 - **Hosting:** AWS Lambda (serverless)
 - **API:** AWS API Gateway (REST API, API-key auth, usage-plan rate limiting)
 - **Frontend:** React + TypeScript, built with Vite; camera scanning with
   `html5-qrcode`
+- **Cache:** AWS DynamoDB (30-day TTL)
 - **Data:** Open Food Facts API
 
 ## Status
@@ -25,18 +26,21 @@ crowd-sourced food label database.
 | 2    | Python script: trigger rules + matching | Done (v1)          |
 | 3    | Deploy as an AWS Lambda function        | Done               |
 | 4    | API Gateway in front, with an API key   | Done               |
-| 5    | DynamoDB cache                          | Planned (optional) |
-| 6    | Frontend (typed barcode + camera scan)  | Done (v0.2.5)      |
+| 5    | DynamoDB cache                          | Done (v0.4.0)      |
+| 6    | Frontend (typed barcode + camera scan)  | Done (v0.3.0)      |
 
 ## How it works
 
-1. `getProduct(barcode)` fetches the product from Open Food Facts.
+1. `getProduct(barcode)` checks the DynamoDB cache first. On a miss it fetches
+   the product from Open Food Facts and caches the raw product data for 30
+   days. If the cache fails, the scan still works, just slower.
 2. For each trigger in `rules.json`, the matching code checks three sources, from
    most to least reliable: additive tags, ingredient IDs, then the raw
    ingredient text.
 3. Fat is checked separately against numeric thresholds.
-4. `scan(barcode)` returns everything as a dict. `lambda_handler` wraps that
-   for AWS.
+4. `scan(barcode)` returns `{"info": {name, brand, image}, "flags": {...}}`.
+   Each flag carries its trigger name and explanation from `rules.json`.
+   `lambda_handler` wraps that for AWS.
 
 Running locally:
 
@@ -47,10 +51,12 @@ python IBDScanner.py
 ## Frontend
 
 The frontend in `frontend/` is a React + TypeScript app built with Vite. You
-type a barcode or scan one with the camera, and it lists the triggers that
-matched.
+type a barcode or scan one with the camera, and it shows the product's name,
+brand and photo, plus a card for each trigger that matched with an explanation
+of why it's commonly reported.
 
-- `src/App.tsx`: the page, the API call and the results list
+- `src/App.tsx`: the page, the disclaimer popup, the API call and the result
+  cards
 - `src/components/Scanner.tsx`: the camera scanner. It shows a portrait video
   with a guide box, ignores repeat reads, and turns green with "Scanning..."
   when it finds a barcode.
@@ -79,22 +85,27 @@ The original plain HTML version (v0.1.0) is still in `ScannerFrontend/`.
 
 | Version | What changed |
 | ------- | ------------ |
+| v0.4.0  | DynamoDB cache: repeat lookups ~680 ms → ~40 ms, 30-day TTL, cache failures fall back to Open Food Facts |
+| v0.3.0  | Product name, brand and image; trigger cards with explanations |
+| v0.2.6  | Disclaimer popup, scan-hint color fix |
 | v0.2.5  | Scanner page: portrait camera view, guide box, "detected" visual |
 | v0.2.0  | React + TypeScript frontend with camera scanning |
 | v0.1.0  | Lambda + API Gateway backend, plain HTML frontend |
 
 ## Future work
 
-- DynamoDB cache for repeat lookups
 - Deploy the frontend over HTTPS so the camera works on phones
-- Product popup with image and full ingredient list
+- Show the full ingredient list
+- Full-screen scanner view while the camera is open
+- AI fallback when Open Food Facts fails to parse the ingredients: read the
+  real label text, validate the output, measure it against the test set
 - Fewer false positives: negative terms (peanut butter, coconut milk),
   label/category suppression (strained oat milk), reduced severity for
   low-lactose dairy
 - "Unknown" result when Open Food Facts failed to parse the ingredients
 - Separate 404 (not found) from 502 (Open Food Facts down)
 - Test set using known barcodes
-- Recommend healthier alternatives
+- Suggest similar products with fewer commonly reported triggers
 
 ---
 
@@ -242,3 +253,24 @@ returned `{"statusCode": ..., "body": ...}` back into an HTTP response.
   id); classes are shared style labels, and an element can have several.
 - **Vite env variables:** only `VITE_` variables from `.env.local` reach the
   browser. Restart `npm run dev` after changing them.
+
+## Caching (DynamoDB)
+
+- **Cache the input, not the output:** the cache stores the raw Open Food Facts
+  product, and the rules run fresh on every scan. If it stored the final
+  results, every edit to `rules.json` would be invisible for cached products.
+- **Barcodes are strings:** as a number, `0038000570742` would lose its
+  leading zeros. Identifiers made of digits (barcodes, ZIP codes, phone
+  numbers) aren't quantities.
+- **Least privilege:** the Lambda's IAM policy allows only `GetItem` and
+  `PutItem` on the one cache table, so a bug or leaked key can't touch
+  anything else.
+- **DynamoDB rejects Python floats,** so the product is stored as one JSON
+  string (`json.dumps` to save, `json.loads` to read).
+- **DRY:** `buildProduct(raw)` turns a raw product into the dict `scan()`
+  uses, and both the cache-hit and fresh-fetch paths call it.
+- **TTL:** each item has an `expiresAt` Unix timestamp (now + 30 days), and
+  DynamoDB deletes expired items in the background.
+- **A cache must never break the app:** each cache call has its own
+  `try/except` that logs and carries on, so a DynamoDB problem only makes
+  scans slower.
