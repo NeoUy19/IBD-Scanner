@@ -32,7 +32,10 @@ def getProduct(barcode):
     try:
         cacheResponse = table.get_item(Key={"barcode": barcode})
         if "Item" in cacheResponse:
-            return buildProduct(json.loads(cacheResponse["Item"]["Product"]))
+                return buildProduct(json.loads(cacheResponse["Item"]["Product"]))
+    except Exception as error:
+        print(f"Cache unavailable: {error}")
+    try:
         url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json?fields={fields}"
         urlresponse = requests.get(url, headers=headers, timeout=10)
         data = urlresponse.json()
@@ -47,11 +50,14 @@ def getProduct(barcode):
             print("Product does not exist")
         else:
             print(data["product"]["product_name"])
-            table.put_item(Item={
-                "barcode": barcode,
-                "Product": json.dumps(data["product"]),
-                "expiresAt": int(time.time()) + 30 * 24 * 60 * 60
-            })
+            try:
+                table.put_item(Item={
+                    "barcode": barcode,
+                    "Product": json.dumps(data["product"]),
+                    "expiresAt": int(time.time()) + 30 * 24 * 60 * 60
+                })
+            except Exception as error:
+                print(f"Cant add to the cache: {error}")
             return buildProduct(data["product"])
 
 def getLeaves(ingredientList):
